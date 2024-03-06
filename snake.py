@@ -1,12 +1,20 @@
 import pygame
 import random
 
+from enum import Enum
 from random import randint
+
+
+class Direction(Enum):
+    UP = [0, -1]
+    RIGHT = [1, 0]
+    DOWN = [0, 1]
+    LEFT = [-1, 0]
+
 
 pygame.init()
 
-
-DIRECTIONS = [[0, -1], [1, 0], [0, 1], [-1, 0]]
+DIRECTIONS = [direction.value for direction in Direction]
 KEYS = [pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_LEFT]
 
 
@@ -42,6 +50,16 @@ class Snake:
 
         self.clock = pygame.time.Clock()
 
+    def reset(self):
+        self.run = True
+        self.head.x, self.head.y = self.width // 2, self.height // 2
+        self.direction = random.choice(DIRECTIONS)
+        self.tails = self.tails[:2]
+        self.score = 0
+
+        fruitx, fruity, self.fruitcolor = self.get_random_fruit()
+        self.fruit.x, self.fruit.y = fruitx, fruity
+
     def get_random_fruit(self):
         bs = self.block_size
         limitx, limity = self.width - bs, self.height - bs
@@ -51,7 +69,11 @@ class Snake:
 
         return randx, randy, randcolor
 
-    def check_events(self):
+    def check_events(self, keydown: int | None = None):
+        if keydown:
+            pygame.event.post(pygame.event.Event(
+                pygame.KEYDOWN, {'key': keydown}))
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.run = False
@@ -98,7 +120,7 @@ class Snake:
 
         pygame.display.update()
 
-        return (x, y), self.run
+        return (x, y), self.score, self.run
 
     def finish(self):
         print(f"Your score was: {self.score}")
