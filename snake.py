@@ -56,16 +56,6 @@ while run:
     fruit = pygame.Rect(fruitx, fruity, BLOCK_SIZE, BLOCK_SIZE)
     pygame.draw.rect(screen, fruitcolor, fruit)
 
-    tailbefore = head.copy()
-    head.x += direction[0] * BLOCK_SIZE
-    head.y += direction[1] * BLOCK_SIZE
-    pygame.draw.rect(screen, rect_color, head)
-    for tail in tails:
-        tmp = tail.copy()
-        tail.x, tail.y = tailbefore.x, tailbefore.y
-        pygame.draw.rect(screen, rect_color, tail)
-        tailbefore = tmp
-
     if head.colliderect(fruit):
         fruitx, fruity, fruitcolor = get_random_coords()
         score += 1
@@ -76,11 +66,20 @@ while run:
                            BLOCK_SIZE, BLOCK_SIZE)
         tails.append(tail)
 
+    tailbefore = head.copy()
+    head.x += direction[0] * BLOCK_SIZE
+    head.y += direction[1] * BLOCK_SIZE
+    pygame.draw.rect(screen, rect_color, head)
+    for tail in tails:
+        tmp = tail.copy()
+        tail.x, tail.y = tailbefore.x, tailbefore.y
+        pygame.draw.rect(screen, rect_color, tail)
+        tailbefore = tmp
+
     x, y = head.x, head.y
-    if x < 0 or x + BLOCK_SIZE > WIDTH or y < 0 or y + BLOCK_SIZE > HEIGHT:
-        run = False
-    elif head in tails:
-        run = False
+    inside_width = x >= 0 and x + BLOCK_SIZE <= WIDTH
+    inside_height = y >= 0 and y + BLOCK_SIZE <= HEIGHT
+    run = inside_width and inside_height and head not in tails
 
     text = font.render(f"Score: {score}", True, (255, 255, 255))
     screen.blit(text, (10, 10))
