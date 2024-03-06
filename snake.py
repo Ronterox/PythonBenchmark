@@ -1,90 +1,105 @@
 import pygame
+import random
+
 from random import randint
 
 pygame.init()
-run = True
-
-RESOLUTION = 2
-FPS = 20
-
-WIDTH, HEIGHT = 320 * RESOLUTION, 240 * RESOLUTION
-RES_FACTOR = WIDTH // 320
-
-BLOCK_SIZE = 10 * RES_FACTOR
-INITIAL_SPEED = 1
-INITIAL_DIRECTION = [0, -1]
 
 
-def get_random_coords():
-    randx, randy = randint(
-        0, WIDTH - BLOCK_SIZE), randint(0, HEIGHT - BLOCK_SIZE)
-    randcolor = (randint(0, 128), randint(0, 255), randint(0, 255))
-    return randx, randy, randcolor
+DIRECTIONS = [[0, -1], [1, 0], [0, 1], [-1, 0]]
+KEYS = [pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_LEFT]
 
 
-font = pygame.font.SysFont('Arial', 20 * RES_FACTOR)
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+class Snake:
+    def __init__(self, fps, resolution):
+        self.run = True
+        self.fps = fps
+        self.resolution = resolution
+        self.width, self.height = 320 * resolution, 240 * resolution
+        self.res_factor = self.width // 320
+        self.block_size = 10 * self.res_factor
 
-x, y = WIDTH // 2, HEIGHT // 2
-head, rect_color = pygame.Rect(x, y, BLOCK_SIZE, BLOCK_SIZE), (255, 0, 0)
-direction = INITIAL_DIRECTION
+        self.font = pygame.font.SysFont('Arial', 20 * self.res_factor)
+        self.screen = pygame.display.set_mode((self.width, self.height))
 
-fruitx, fruity, fruitcolor = get_random_coords()
-score = 0
+        self.head = pygame.Rect(self.width // 2, self.height // 2,
+                                self.block_size, self.block_size)
+        self.rect_color = (255, 0, 0)
+        self.direction = random.choice(DIRECTIONS)
 
-tails = [pygame.Rect(x, y + BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE),
-         pygame.Rect(x, y + 2 * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)]
-clock = pygame.time.Clock()
-while run:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                run = False
-            elif event.key == pygame.K_UP:
-                direction = [0, -1]
-            elif event.key == pygame.K_DOWN:
-                direction = [0, 1]
-            elif event.key == pygame.K_LEFT:
-                direction = [-1, 0]
-            elif event.key == pygame.K_RIGHT:
-                direction = [1, 0]
+        dx, dy = self.direction
+        blockx, blocky = -dx * self.block_size, -dy * self.block_size
 
-    screen.fill((0, 0, 0))
+        self.tails = [pygame.Rect(self.head.x + blockx, self.head.y + blocky,
+                                  self.block_size, self.block_size),
+                      pygame.Rect(self.head.x + blockx * 2, self.head.y + blocky * 2,
+                                  self.block_size, self.block_size)]
 
-    fruit = pygame.Rect(fruitx, fruity, BLOCK_SIZE, BLOCK_SIZE)
-    pygame.draw.rect(screen, fruitcolor, fruit)
+        fruitx, fruity, self.fruitcolor = self.get_random_fruit()
+        self.fruit = pygame.Rect(
+            fruitx, fruity, self.block_size, self.block_size)
+        self.score = 0
 
-    if head.colliderect(fruit):
-        fruitx, fruity, fruitcolor = get_random_coords()
-        score += 1
+        self.clock = pygame.time.Clock()
 
-        last_tail = tails[-1]
-        tail = pygame.Rect(last_tail.x + BLOCK_SIZE,
-                           last_tail.y + BLOCK_SIZE,
-                           BLOCK_SIZE, BLOCK_SIZE)
-        tails.append(tail)
+    def get_random_fruit(self):
+        bs = self.block_size
+        limitx, limity = self.width - bs, self.height - bs
 
-    tailbefore = head.copy()
-    head.x += direction[0] * BLOCK_SIZE
-    head.y += direction[1] * BLOCK_SIZE
-    pygame.draw.rect(screen, rect_color, head)
-    for tail in tails:
-        tmp = tail.copy()
-        tail.x, tail.y = tailbefore.x, tailbefore.y
-        pygame.draw.rect(screen, rect_color, tail)
-        tailbefore = tmp
+        randx, randy = randint(0, limitx), randint(0, limity)
+        randcolor = (randint(0, 255), randint(0, 255), randint(0, 255))
 
-    x, y = head.x, head.y
-    inside_width = x >= 0 and x + BLOCK_SIZE <= WIDTH
-    inside_height = y >= 0 and y + BLOCK_SIZE <= HEIGHT
-    run = inside_width and inside_height and head not in tails
+        return randx, randy, randcolor
 
-    text = font.render(f"Score: {score}", True, (255, 255, 255))
-    screen.blit(text, (10, 10))
+    def check_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.run = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.run = False
+                    continue
+                for direction, key in zip(DIRECTIONS, KEYS):
+                    if event.key == key:
+                        self.direction = direction
 
-    clock.tick(FPS)
-    pygame.display.update()
+    def update(self):
+        self.screen.fill((0, 0, 0))
+        pygame.draw.rect(self.screen, self.fruitcolor, self.fruit)
 
-pygame.quit()
+        if self.head.colliderect(self.fruit):
+            self.fruit.x, self.fruit.y, self.fruitcolor = self.get_random_fruit()
+            self.score += 1
+
+            last_tail = self.tails[-1]
+            tail = pygame.Rect(last_tail.x + self.block_size,
+                               last_tail.y + self.block_size,
+                               self.block_size, self.block_size)
+            self.tails.append(tail)
+
+        tailbefore = self.head.copy()
+        self.head.x += self.direction[0] * self.block_size
+        self.head.y += self.direction[1] * self.block_size
+        pygame.draw.rect(self.screen, self.rect_color, self.head)
+        for tail in self.tails:
+            tmp = tail.copy()
+            tail.x, tail.y = tailbefore.x, tailbefore.y
+            pygame.draw.rect(self.screen, self.rect_color, tail)
+            tailbefore = tmp
+
+        text = self.font.render(f"Score: {self.score}", True, (255, 255, 255))
+        self.screen.blit(text, (10, 10))
+
+        x, y = self.head.x, self.head.y
+        inside_width = x >= 0 and x + self.block_size <= self.width
+        inside_height = y >= 0 and y + self.block_size <= self.height
+
+        self.run = self.run and inside_width and inside_height and self.head not in self.tails
+
+        pygame.display.update()
+
+        return (x, y), self.run
+
+    def finish(self):
+        print(f"Your score was: {self.score}")
+        pygame.quit()
