@@ -1,4 +1,5 @@
 import random
+import signal
 
 from enum import Enum
 from snake import Snake, DIRECTIONS, KEYS
@@ -10,7 +11,8 @@ class Actions(Enum):
     TURN_LEFT = [0, 0, 1]
 
 
-snake = Snake(fps=20, resolution=2)
+NUM_GAMES = 1000
+snake = Snake(fps=144, resolution=2)
 actions = [action for action in Actions]
 
 
@@ -29,11 +31,27 @@ def get_random_action() -> int | None:
     return None
 
 
+def print_results():
+    games, total = len(scores), sum(scores)
+    print(f'\nAverage score: {total / games} on {games} games')
+    print(f'Total Score: {total}')
+    print(f'Max score: {max(scores)}\n')
+
+
+def signal_handler(__, _):
+    snake.finish()
+    print_results()
+    exit()
+
+
+# Gracefully exit the program, but still save the results
+signal.signal(signal.SIGINT, signal_handler)
+
 scores = []
-for _ in range(10_000):
+for i in range(NUM_GAMES):
     snake.reset()
 
-    i = 0
+    j = 0
     while snake.run:
         key = None
         if i % 5 == 0:
@@ -42,12 +60,10 @@ for _ in range(10_000):
         snake.check_events(key)
         snake.update()
         snake.clock.tick(snake.fps)
-        i += 1
+        j += 1
 
     scores.append(snake.score)
+    print(f'Game {i + 1}/{NUM_GAMES}: {snake.score}, {j} steps')
 
-print(f'Average score: {sum(scores) / len(scores)}')
-print(f'Total Score: {sum(scores)}')
-print(f'Max score: {max(scores)}')
-
+print_results()
 snake.finish()
