@@ -31,6 +31,6 @@ class Plot:
         plt.text(x, y, text)
         return self
 
-    def pause(self, time: int) -> 'Plot':
+    def pause(self, time: float | int) -> 'Plot':
         plt.pause(time)
         return self

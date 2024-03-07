@@ -1,35 +1,12 @@
-import random
 import signal
 
-from enum import Enum
-from snake import Snake, DIRECTIONS, KEYS
+from snake import Snake
 from plotting import Plot
-
-
-class Actions(Enum):
-    DO_NOTHING = [1, 0, 0]
-    TURN_RIGHT = [0, 1, 0]
-    TURN_LEFT = [0, 0, 1]
-
+from agent import RandomAgent
 
 NUM_GAMES = 1000
-snake = Snake(fps=-1, resolution=2)
-actions = [action for action in Actions]
-
-
-def get_random_action() -> int | None:
-    action = random.choice(actions)
-    direction = snake.direction
-
-    if action == Actions.TURN_RIGHT:
-        index = DIRECTIONS.index(direction)
-        return KEYS[(index + 1) % len(KEYS)]
-
-    if action == Actions.TURN_LEFT:
-        index = DIRECTIONS.index(direction)
-        return KEYS[index - 1]
-
-    return None
+FPS_LIMIT = -1
+RESOLUTION = 2
 
 
 def print_results():
@@ -48,6 +25,9 @@ def signal_handler(__, _):
 # Gracefully exit the program, but still save the results
 signal.signal(signal.SIGINT, signal_handler)
 
+snake = Snake(FPS_LIMIT, RESOLUTION)
+agent = RandomAgent(snake)
+
 plot = Plot()
 scores = []
 for i in range(NUM_GAMES):
@@ -57,7 +37,7 @@ for i in range(NUM_GAMES):
     while snake.run:
         key = None
         if i % 5 == 0:
-            key = get_random_action()
+            key = agent.get_action_key(None)
 
         snake.check_events(key)
         snake.update()
@@ -75,6 +55,5 @@ for i in range(NUM_GAMES):
             .text(i, snake.score, f'{snake.score}')\
             .pause(0.1)
 
-
-print_results()
 snake.finish()
+print_results()
