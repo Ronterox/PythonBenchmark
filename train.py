@@ -3,6 +3,7 @@ import signal
 
 from enum import Enum
 from snake import Snake, DIRECTIONS, KEYS
+from plotting import Plot
 
 
 class Actions(Enum):
@@ -12,7 +13,7 @@ class Actions(Enum):
 
 
 NUM_GAMES = 1000
-snake = Snake(fps=144, resolution=2)
+snake = Snake(fps=-1, resolution=2)
 actions = [action for action in Actions]
 
 
@@ -47,6 +48,7 @@ def signal_handler(__, _):
 # Gracefully exit the program, but still save the results
 signal.signal(signal.SIGINT, signal_handler)
 
+plot = Plot()
 scores = []
 for i in range(NUM_GAMES):
     snake.reset()
@@ -64,6 +66,15 @@ for i in range(NUM_GAMES):
 
     scores.append(snake.score)
     print(f'Game {i + 1}/{NUM_GAMES}: {snake.score}, {j} steps')
+
+    if i % 10 == 0:
+        plot.clean() \
+            .title(f'Game {i + 1}/{NUM_GAMES}') \
+            .labels('Games', 'Scores') \
+            .plot(scores)\
+            .text(i, snake.score, f'{snake.score}')\
+            .pause(0.1)
+
 
 print_results()
 snake.finish()
