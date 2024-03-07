@@ -70,7 +70,7 @@ class Snake:
         return randx, randy, randcolor
 
     def check_events(self, keydown: int | None = None):
-        if keydown:
+        if keydown is not None:
             pygame.event.post(pygame.event.Event(
                 pygame.KEYDOWN, {'key': keydown}))
 

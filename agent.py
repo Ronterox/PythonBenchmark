@@ -12,19 +12,21 @@ class Action(Enum):
 
 
 class Agent(ABC):
-    def __init__(self, env: Snake, act_every: int = 1):
+    def __init__(self, env: Snake, act_every: int = 1, enabled: bool = True):
         self.env = env
+        self.enabled = enabled
         self.actions = [action for action in Action]
         self.act_every = act_every
 
     @abstractmethod
-    def get_action_key(self, state) -> int | None:
+    def get_action(self, state) -> Action:
         raise NotImplementedError
 
+    def get_action_key(self, state) -> int | None:
+        if not self.enabled:
+            return None
 
-class RandomAgent(Agent):
-    def get_random_action(self, actions: list[Action]) -> int | None:
-        action = random.choice(actions)
+        action = self.get_action(state)
         direction = self.env.direction
 
         if action == Action.TURN_RIGHT:
@@ -37,5 +39,7 @@ class RandomAgent(Agent):
 
         return None
 
-    def get_action_key(self, state) -> int | None:
-        return self.get_random_action(self.actions)
+
+class RandomAgent(Agent):
+    def get_action(self, state) -> Action:
+        return random.choice(self.actions)

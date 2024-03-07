@@ -7,7 +7,10 @@ from agent import RandomAgent
 NUM_GAMES = 1000
 FPS_LIMIT = -1
 RESOLUTION = 2
+
+ENABLE_AGENT = True
 AGENT_ACT_EVERY = 3
+AGENT_TYPE = RandomAgent
 
 
 def print_results():
@@ -27,7 +30,7 @@ def signal_handler(__, _):
 signal.signal(signal.SIGINT, signal_handler)
 
 snake = Snake(FPS_LIMIT, RESOLUTION)
-agent = RandomAgent(snake, AGENT_ACT_EVERY)
+agent = AGENT_TYPE(snake, AGENT_ACT_EVERY, ENABLE_AGENT)
 
 plot = Plot()
 scores = []
