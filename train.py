@@ -2,15 +2,15 @@ import signal
 
 from snake import Snake
 from plotting import Plot
-from agent import RandomAgent
+from agent import ModelAgent
 
 NUM_GAMES = 1000
-FPS_LIMIT = -1
+FPS_LIMIT = 20
 RESOLUTION = 2
 
 ENABLE_AGENT = True
-AGENT_ACT_EVERY = 3
-AGENT_TYPE = RandomAgent
+AGENT_ACT_EVERY = 2
+AGENT_TYPE = ModelAgent
 
 
 def print_results():

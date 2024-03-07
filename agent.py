@@ -41,5 +41,15 @@ class Agent(ABC):
 
 
 class RandomAgent(Agent):
+    def __init__(self, env: Snake, act_every: int = 1, enabled: bool = True):
+        super().__init__(env, act_every, enabled)
+        self.act_times = [act_every // 2, act_every, act_every * 2]
+
     def get_action(self, state) -> Action:
+        self.act_every = random.choice(self.act_times)
         return random.choice(self.actions)
+
+
+class ModelAgent(Agent):
+    def get_action(self, state) -> Action:
+        pass
