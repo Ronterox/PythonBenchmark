@@ -7,6 +7,7 @@ from agent import RandomAgent
 NUM_GAMES = 1000
 FPS_LIMIT = -1
 RESOLUTION = 2
+AGENT_ACT_EVERY = 3
 
 
 def print_results():
@@ -26,7 +27,7 @@ def signal_handler(__, _):
 signal.signal(signal.SIGINT, signal_handler)
 
 snake = Snake(FPS_LIMIT, RESOLUTION)
-agent = RandomAgent(snake)
+agent = RandomAgent(snake, AGENT_ACT_EVERY)
 
 plot = Plot()
 scores = []
@@ -36,7 +37,7 @@ for i in range(NUM_GAMES):
     j = 0
     while snake.run:
         key = None
-        if i % 5 == 0:
+        if i % agent.act_every == 0:
             key = agent.get_action_key(None)
 
         snake.check_events(key)

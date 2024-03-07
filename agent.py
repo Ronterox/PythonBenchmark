@@ -12,9 +12,10 @@ class Action(Enum):
 
 
 class Agent(ABC):
-    def __init__(self, env: Snake):
+    def __init__(self, env: Snake, act_every: int = 1):
         self.env = env
         self.actions = [action for action in Action]
+        self.act_every = act_every
 
     @abstractmethod
     def get_action_key(self, state) -> int | None:
