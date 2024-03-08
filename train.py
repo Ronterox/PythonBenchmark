@@ -35,16 +35,16 @@ agent = AGENT_TYPE(snake, AGENT_ACT_EVERY, ENABLE_AGENT)
 plot = Plot()
 scores = []
 for i in range(NUM_GAMES):
-    snake.reset()
+    reward, state, is_done = snake.reset()
 
     j = 0
     while snake.run:
         key = None
         if i % agent.act_every == 0:
-            key = agent.get_action_key(None)
+            key = agent.get_action_key(reward, state, is_done)
 
         snake.check_events(key)
-        snake.update()
+        reward, state, is_done = snake.update()
         snake.clock.tick(snake.fps)
         j += 1
 

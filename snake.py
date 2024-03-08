@@ -59,6 +59,7 @@ class Snake:
 
         fruitx, fruity, self.fruitcolor = self.get_random_fruit()
         self.fruit.x, self.fruit.y = fruitx, fruity
+        return 0, [self.head.x, self.head.y, self.fruit.x, self.fruit.y], False
 
     def get_random_fruit(self):
         bs = self.block_size
@@ -86,12 +87,15 @@ class Snake:
                         self.direction = direction
 
     def update(self):
+        reward = 0
+
         self.screen.fill((0, 0, 0))
         pygame.draw.rect(self.screen, self.fruitcolor, self.fruit)
 
         if self.head.colliderect(self.fruit):
             self.fruit.x, self.fruit.y, self.fruitcolor = self.get_random_fruit()
             self.score += 1
+            reward = 10
 
             last_tail = self.tails[-1]
             tail = pygame.Rect(last_tail.x + self.block_size,
@@ -120,7 +124,11 @@ class Snake:
 
         pygame.display.update()
 
-        return (x, y), self.score, self.run
+        # Gym Attributes
+        reward += 1 if self.run else -10
+        state = [self.head.x, self.head.y, self.fruit.x, self.fruit.y]
+        is_done = not self.run
+        return reward, state, is_done
 
     def finish(self):
         print(f"Your score was: {self.score}")

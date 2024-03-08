@@ -19,14 +19,14 @@ class Agent(ABC):
         self.act_every = act_every
 
     @abstractmethod
-    def get_action(self, state) -> Action:
+    def get_action(self, reward, state, is_done) -> Action:
         raise NotImplementedError
 
-    def get_action_key(self, state) -> int | None:
+    def get_action_key(self, reward, state, is_done) -> int | None:
         if not self.enabled:
             return None
 
-        action = self.get_action(state)
+        action = self.get_action(reward, state, is_done)
         direction = self.env.direction
 
         if action == Action.TURN_RIGHT:
@@ -41,10 +41,11 @@ class Agent(ABC):
 
 
 class RandomAgent(Agent):
-    def get_action(self, state) -> Action:
+    def get_action(self, reward, state, is_done) -> Action:
         return random.choice(self.actions)
 
 
 class ModelAgent(Agent):
-    def get_action(self, state) -> Action:
+    def get_action(self, reward, state, is_done) -> Action:
+        # Either random depending on epsilon greedy or from the model
         pass
