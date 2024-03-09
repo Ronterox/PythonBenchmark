@@ -23,34 +23,41 @@ class QModel(nn.Module):
         return out
 
     def transform_state(self, state: State) -> torch.Tensor:
-        return torch.tensor([state.headx, state.heady,
-                             state.fruitx, state.fruity],
-                            dtype=torch.float32)
+        hx, hy, fx, fy = state.headx, state.heady, state.fruitx, state.fruity
+        return torch.tensor([
+            fx > hx,  # food right
+            fx < hx,  # food left
+            fy > hy,  # food down
+            fy < hy,  # food up
+        ], dtype=torch.float32)
 
     def transform_states(self, states: list[State]) -> torch.Tensor:
         return torch.stack([self.transform_state(state) for state in states])
 
-    def learn(self, memory: deque[Memory], batch_size: int = 32, gamma: float = 0.9):
+    def learn(self, memory: deque[Memory], batch_size: int, gamma: float):
         if len(memory) < batch_size:
             return
 
         batch = random.sample(memory, batch_size)
         states, actions, rewards, next_states, dones = zip(*batch)
-        next_states_tensor = self.transform_states(next_states)
 
+        next_states_tensor = self.transform_states(next_states)
         q_values = self.forward(next_states_tensor)
+
+        values, _ = torch.max(q_values, dim=1)
         rewards_tensor = torch.tensor(rewards, dtype=torch.float32)
         dones_tensor = torch.tensor(dones, dtype=torch.int32)
 
-        q_targets = rewards_tensor + gamma * \
-            torch.max(q_values, dim=1).values * (1 - dones_tensor)
-
-        actions_tensor = torch.stack(
-            [torch.tensor(action.value) for action in actions])
-        targets = q_targets.unsqueeze(0).transpose(0, 1) * actions_tensor
+        q_results = rewards_tensor + gamma * values * (1 - dones_tensor)
 
         states_tensor = self.transform_states(states)
         predictions = self.forward(states_tensor)
+
+        actions_tensor = torch.tensor([action.value for action in actions])
+        action_indexes = torch.argmax(actions_tensor, 1)
+
+        targets = predictions.clone()
+        targets[:, action_indexes] = q_results
 
         self.optimizer.zero_grad()
         loss = self.loss(predictions, targets)

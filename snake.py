@@ -1,5 +1,6 @@
 import pygame
 import random
+import os
 
 from enum import Enum
 from random import randint
@@ -13,6 +14,8 @@ class Direction(Enum):
     DOWN = [0, 1]
     LEFT = [-1, 0]
 
+
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
 pygame.init()
 
