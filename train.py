@@ -3,9 +3,11 @@ import signal
 from snake import Snake
 from plotting import Plot
 from agent import ModelAgent
+from models import QModel
+from global_types import Memory
 
 NUM_GAMES = 1000
-FPS_LIMIT = 20
+FPS_LIMIT = -1
 RESOLUTION = 2
 
 ENABLE_AGENT = True
@@ -14,10 +16,10 @@ AGENT_TYPE = ModelAgent
 
 
 def print_results():
-    games, total = len(scores), sum(scores)
-    print(f'\nAverage score: {total / games} on {games} games')
-    print(f'Total Score: {total}')
-    print(f'Max score: {max(scores)}\n')
+    games, total, maximum = len(rewards), sum(rewards), max(rewards)
+    print(f'\nAverage reward: {total / games} on {games} games')
+    print(f'Total Rewards: {total}')
+    print(f'Max rewards: {maximum}, on run {rewards.index(maximum)}\n')
 
 
 def signal_handler(__, _):
@@ -30,34 +32,48 @@ def signal_handler(__, _):
 signal.signal(signal.SIGINT, signal_handler)
 
 snake = Snake(FPS_LIMIT, RESOLUTION)
-agent = AGENT_TYPE(snake, AGENT_ACT_EVERY, ENABLE_AGENT)
+model = QModel(input_size=4, hidden_size=8, output_size=3)
+agent = AGENT_TYPE(snake, model, AGENT_ACT_EVERY, ENABLE_AGENT)
 
 plot = Plot()
-scores = []
+rewards = []
 for i in range(NUM_GAMES):
     reward, state, is_done = snake.reset()
 
     j = 0
-    while snake.run:
+    total_reward = 0
+    while snake.run and j < len(snake.tails) * 50:
         key = None
         if i % agent.act_every == 0:
-            key = agent.get_action_key(reward, state, is_done)
+            key = agent.get_action_key(state)
 
         snake.check_events(key)
         reward, state, is_done = snake.update()
         snake.clock.tick(snake.fps)
+
+        if agent.model is not None:
+            agent.memory.append(
+                Memory(agent.state, agent.action, reward, state, is_done))
+            agent.model.learn(agent.memory)
+
+        total_reward += reward
         j += 1
 
-    scores.append(snake.score)
+    rewards.append(total_reward)
     print(f'Game {i + 1}/{NUM_GAMES}: {snake.score}, {j} steps')
 
     if i % 10 == 0:
+        avg_reward = sum(rewards) / len(rewards)
+        print(f'Avg reward: {avg_reward}')
         plot.clean() \
             .title(f'Game {i + 1}/{NUM_GAMES}') \
             .labels('Games', 'Scores') \
-            .plot(scores)\
+            .plot(rewards)\
+            .plot(avg_reward) \
             .text(i, snake.score, f'{snake.score}')\
+            .text(i, avg_reward, f'{avg_reward}')\
             .pause(0.1)
+
 
 snake.finish()
 print_results()

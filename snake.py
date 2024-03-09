@@ -4,6 +4,8 @@ import random
 from enum import Enum
 from random import randint
 
+from global_types import State
+
 
 class Direction(Enum):
     UP = [0, -1]
@@ -50,7 +52,7 @@ class Snake:
 
         self.clock = pygame.time.Clock()
 
-    def reset(self):
+    def reset(self) -> tuple[int, State, bool]:
         self.run = True
         self.head.x, self.head.y = self.width // 2, self.height // 2
         self.direction = random.choice(DIRECTIONS)
@@ -59,9 +61,12 @@ class Snake:
 
         fruitx, fruity, self.fruitcolor = self.get_random_fruit()
         self.fruit.x, self.fruit.y = fruitx, fruity
-        return 0, [self.head.x, self.head.y, self.fruit.x, self.fruit.y], False
+        state = State(self.head.x, self.head.y,
+                      self.fruit.x, self.fruit.y,
+                      self.direction)
+        return 0, state, False
 
-    def get_random_fruit(self):
+    def get_random_fruit(self) -> tuple[int, int, tuple[int, int, int]]:
         bs = self.block_size
         limitx, limity = self.width - bs, self.height - bs
 
@@ -86,7 +91,7 @@ class Snake:
                     if event.key == key:
                         self.direction = direction
 
-    def update(self):
+    def update(self) -> tuple[int, State, bool]:
         reward = 0
 
         self.screen.fill((0, 0, 0))
@@ -119,14 +124,17 @@ class Snake:
         x, y = self.head.x, self.head.y
         inside_width = x >= 0 and x + self.block_size <= self.width
         inside_height = y >= 0 and y + self.block_size <= self.height
+        not_hit = self.head not in self.tails
 
-        self.run = self.run and inside_width and inside_height and self.head not in self.tails
+        self.run = self.run and inside_width and inside_height and not_hit
 
         pygame.display.update()
 
         # Gym Attributes
-        reward += 1 if self.run else -10
-        state = [self.head.x, self.head.y, self.fruit.x, self.fruit.y]
+        reward += 0 if self.run else -10
+        state = State(self.head.x, self.head.y,
+                      self.fruit.x, self.fruit.y,
+                      self.direction)
         is_done = not self.run
         return reward, state, is_done
 

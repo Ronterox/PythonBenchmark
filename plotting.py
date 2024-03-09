@@ -5,6 +5,9 @@ plt.ion()
 
 
 class Plot:
+    def __init__(self):
+        self.plt = plt
+
     def clean(self) -> 'Plot':
         display.clear_output(wait=True)
         display.display(plt.gcf())

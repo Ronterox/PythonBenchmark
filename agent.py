@@ -1,14 +1,12 @@
 import random
+import torch
 
-from enum import Enum
+from collections import deque
 from abc import ABC, abstractmethod
-from snake import DIRECTIONS, KEYS, Snake
 
-
-class Action(Enum):
-    DO_NOTHING = [1, 0, 0]
-    TURN_RIGHT = [0, 1, 0]
-    TURN_LEFT = [0, 0, 1]
+from models import QModel
+from snake import DIRECTIONS, KEYS, Snake, State
+from global_types import Action, Memory
 
 
 class Agent(ABC):
@@ -19,15 +17,31 @@ class Agent(ABC):
         self.act_every = act_every
 
     @abstractmethod
-    def get_action(self, reward, state, is_done) -> Action:
+    def get_action(self, state: State) -> Action:
         raise NotImplementedError
 
-    def get_action_key(self, reward, state, is_done) -> int | None:
+    def key_to_action(self, key: int | None, state: State) -> Action:
+        if key is None:
+            return Action.DO_NOTHING
+
+        direction = state.direction
+        index = KEYS.index(key)
+        next_direction = DIRECTIONS[index]
+
+        if next_direction == direction:
+            return Action.DO_NOTHING
+
+        if next_direction == DIRECTIONS[(DIRECTIONS.index(direction) + 1) % 4]:
+            return Action.TURN_RIGHT
+
+        return Action.TURN_LEFT
+
+    def get_action_key(self, state: State) -> int | None:
         if not self.enabled:
             return None
 
-        action = self.get_action(reward, state, is_done)
-        direction = self.env.direction
+        action = self.get_action(state)
+        direction = state.direction
 
         if action == Action.TURN_RIGHT:
             index = DIRECTIONS.index(direction)
@@ -41,11 +55,27 @@ class Agent(ABC):
 
 
 class RandomAgent(Agent):
-    def get_action(self, reward, state, is_done) -> Action:
+    def get_action(self, state: State) -> Action:
         return random.choice(self.actions)
 
 
 class ModelAgent(Agent):
-    def get_action(self, reward, state, is_done) -> Action:
-        # Either random depending on epsilon greedy or from the model
-        pass
+    def __init__(self, env: Snake, model: QModel,  act_every: int = 1, enabled: bool = True):
+        super().__init__(env, act_every, enabled)
+        self.model = model
+        self.memory: deque[Memory] = deque(maxlen=1000)
+
+    def get_action(self, state: State) -> Action:
+        self.state = state
+
+        epsilon = 0.95
+        if random.random() > epsilon:
+            self.action = random.choice(self.actions)
+            return self.action
+
+        stateTensor = self.model.transform_state(state)
+        stateAction: torch.Tensor = self.model(stateTensor)
+        action_index = torch.argmax(stateAction).item().__int__()
+
+        self.action = self.actions[action_index]
+        return self.action
