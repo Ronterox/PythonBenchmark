@@ -32,8 +32,9 @@ def signal_handler(__, _):
 signal.signal(signal.SIGINT, signal_handler)
 
 snake = Snake(FPS_LIMIT, RESOLUTION)
-model = QModel(input_size=len(State._fields) - 1,
-               hidden_size=8,
+input_size = len(State._fields) - 1
+model = QModel(input_size,
+               hidden_size=input_size * 4,
                output_size=Action.__len__())
 agent = AGENT_TYPE(snake, model, AGENT_ACT_EVERY, ENABLE_AGENT)
 
@@ -56,7 +57,7 @@ for i in range(NUM_GAMES):
         if agent.model is not None:
             agent.memory.append(
                 Memory(agent.state, agent.action, reward, state, is_done))
-            agent.model.learn(agent.memory)
+            agent.model.learn(agent.memory, batch_size=64)
 
         total_reward += reward
         j += 1
@@ -71,7 +72,7 @@ for i in range(NUM_GAMES):
             .title(f'Game {i + 1}/{NUM_GAMES}') \
             .labels('Games', 'Scores') \
             .plot(rewards)\
-            .plot(avg_reward) \
+            .plot(avg_reward)\
             .text(i, snake.score, f'{snake.score}')\
             .text(i, int(avg_reward), f'{avg_reward}')\
             .pause(0.1)

@@ -25,8 +25,8 @@ class Plot:
         plt.title(title, *args)
         return self
 
-    def ylim(self, ymin: int, ymax: int) -> 'Plot':
-        plt.ylim(ymin, ymax)
+    def ylim(self, ymin: int, *args, **kwargs) -> 'Plot':
+        plt.ylim(ymin, *args, **kwargs)
         return self
 
     def labels(self, xlabel: str, ylabel: str) -> 'Plot':

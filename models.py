@@ -52,7 +52,8 @@ class QModel(nn.Module):
         states_tensor = self.transform_states(states)
         predictions = self.forward(states_tensor)
 
-        loss = self.loss(predictions, targets)
         self.optimizer.zero_grad()
+        loss = self.loss(predictions, targets)
         loss.backward()
+
         self.optimizer.step()
