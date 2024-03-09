@@ -25,6 +25,10 @@ class Plot:
         plt.title(title, *args)
         return self
 
+    def ylim(self, ymin: int, ymax: int) -> 'Plot':
+        plt.ylim(ymin, ymax)
+        return self
+
     def labels(self, xlabel: str, ylabel: str) -> 'Plot':
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
