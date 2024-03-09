@@ -9,7 +9,7 @@ class Action(Enum):
 
 
 State = namedtuple(
-    'State', ['headx', 'heady', 'fruitx', 'fruity', 'direction'])
+    'State', ['headx', 'heady', 'fruitx', 'fruity', 'direction', 'tails'])
 
 Memory = namedtuple(
     'Memory', ['state', 'action', 'reward',  'next_state', 'done'])

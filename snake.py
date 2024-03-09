@@ -66,7 +66,7 @@ class Snake:
         self.fruit.x, self.fruit.y = fruitx, fruity
         state = State(self.head.x, self.head.y,
                       self.fruit.x, self.fruit.y,
-                      self.direction)
+                      self.direction.copy(), self.tails.copy())
         return 0, state, False
 
     def get_random_fruit(self) -> tuple[int, int, tuple[int, int, int]]:
@@ -137,7 +137,7 @@ class Snake:
         reward += 0 if self.run else -10
         state = State(self.head.x, self.head.y,
                       self.fruit.x, self.fruit.y,
-                      self.direction)
+                      self.direction.copy(), self.tails.copy())
         is_done = not self.run
         return reward, state, is_done
 

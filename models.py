@@ -4,7 +4,7 @@ import random
 from torch import nn
 from collections import deque
 
-from snake import State
+from snake import Snake, State
 from global_types import Memory
 
 
@@ -17,6 +17,11 @@ class QModel(nn.Module):
         self.loss = nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.parameters(), lr)
 
+    def set_env(self, env: Snake) -> 'QModel':
+        self.block_size = env.block_size
+        self.width, self.width = env.width, env.width
+        return self
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         out = self.relu(self.l1(x))
         out = self.l2(out)
@@ -24,11 +29,19 @@ class QModel(nn.Module):
 
     def transform_state(self, state: State) -> torch.Tensor:
         hx, hy, fx, fy = state.headx, state.heady, state.fruitx, state.fruity
+        bs, w, h = self.block_size, self.width, self.width
+        tails = state.tails
+
         return torch.tensor([
             fx > hx,  # food right
             fx < hx,  # food left
             fy > hy,  # food down
             fy < hy,  # food up
+
+            hx >= w - bs or (hx + bs, hy) in tails,  # wall right or tail right
+            hx <= 0 or (hx - bs, hy) in tails,  # wall left or tail left
+            hy >= h - bs or (hx, hy + bs) in tails,  # wall down or tail down
+            hy <= 0 or (hx, hy - bs) in tails  # wall up or tail up
         ], dtype=torch.float32)
 
     def transform_states(self, states: list[State]) -> torch.Tensor:
@@ -54,9 +67,20 @@ class QModel(nn.Module):
         predictions = self.forward(states_tensor)
 
         actions_tensor = torch.tensor([action.value for action in actions])
-        action_indexes = torch.argmax(actions_tensor, 1)
+        action_indexes = torch.argmax(actions_tensor, 1, keepdim=True)
 
         targets = predictions.clone()
+        targetsHead = targets[:10,]
+        actions_indexHead = action_indexes[:10,]
+        q_resultsHead = q_results[:10,].unsqueeze(-1)
+        print("targetsHead", targetsHead)
+        print("actions_indexHead", actions_indexHead)
+        print("targetsAction", targetsHead.gather(1, actions_indexHead))
+        print("q_resultsHead", q_resultsHead)
+
+        targetsHead.scatter_(1, actions_indexHead, q_resultsHead)
+        print("targetsHeadResult", targetsHead)
+        exit()
         targets[:, action_indexes] = q_results
 
         self.optimizer.zero_grad()
