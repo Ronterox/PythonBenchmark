@@ -70,18 +70,7 @@ class QModel(nn.Module):
         action_indexes = torch.argmax(actions_tensor, 1, keepdim=True)
 
         targets = predictions.clone()
-        targetsHead = targets[:10,]
-        actions_indexHead = action_indexes[:10,]
-        q_resultsHead = q_results[:10,].unsqueeze(-1)
-        print("targetsHead", targetsHead)
-        print("actions_indexHead", actions_indexHead)
-        print("targetsAction", targetsHead.gather(1, actions_indexHead))
-        print("q_resultsHead", q_resultsHead)
-
-        targetsHead.scatter_(1, actions_indexHead, q_resultsHead)
-        print("targetsHeadResult", targetsHead)
-        exit()
-        targets[:, action_indexes] = q_results
+        targets.scatter_(1, action_indexes, q_results.unsqueeze(1))
 
         self.optimizer.zero_grad()
         loss = self.loss(predictions, targets)

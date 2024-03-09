@@ -63,12 +63,13 @@ class ModelAgent(Agent):
     def __init__(self, env: Snake, model: QModel,  act_every: int = 1, enabled: bool = True):
         super().__init__(env, act_every, enabled)
         self.model = model
-        self.memory: deque[Memory] = deque(maxlen=1000)
+        self.memory: deque[Memory] = deque(maxlen=10000)
 
     def get_action(self, state: State) -> Action:
         self.state = state
 
-        epsilon = 0.65
+        epsilon = min((1 - 0.01) * len(self.memory) / 10000 + 0.01, 0.95)
+        # print(f'epsilon: {epsilon}')
         if random.random() > epsilon:
             self.action = random.choice(self.actions)
             return self.action
