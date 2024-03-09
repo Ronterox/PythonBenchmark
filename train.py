@@ -6,7 +6,7 @@ from agent import ModelAgent
 from models import QModel
 from global_types import Memory
 
-NUM_GAMES = 1000
+NUM_GAMES = 10000
 FPS_LIMIT = -1
 RESOLUTION = 2
 
@@ -32,7 +32,7 @@ def signal_handler(__, _):
 signal.signal(signal.SIGINT, signal_handler)
 
 snake = Snake(FPS_LIMIT, RESOLUTION)
-model = QModel(input_size=8, hidden_size=32, output_size=3).set_env(snake)
+model = QModel(input_size=8, hidden_size=16, output_size=3).set_env(snake)
 agent = AGENT_TYPE(snake, model, AGENT_ACT_EVERY, ENABLE_AGENT)
 
 plot = Plot()
@@ -67,13 +67,14 @@ for i in range(NUM_GAMES):
 
     if i % 10 == 0:
         avg_reward = mean_rewards[-100:]
-        print(f'Avg reward: {sum(avg_reward) / 100}')
+        last_reward = rewards[-100:]
+        print(f'Avg reward: {sum(avg_reward) / len(avg_reward)}')
         plot.clean() \
             .title(f'Game {i + 1}/{NUM_GAMES}') \
             .labels('Games', 'Scores') \
-            .plot(rewards) \
+            .plot(last_reward) \
             .plot(avg_reward) \
-            .text(i, rewards[-1], f'{rewards[-1]}') \
+            .text(i, last_reward[-1], f'{last_reward[-1]}') \
             .text(i, avg_reward[-1], f'{avg_reward[-1]}') \
             .pause(0.1)
 

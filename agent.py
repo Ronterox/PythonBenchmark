@@ -68,7 +68,7 @@ class ModelAgent(Agent):
     def get_action(self, state: State) -> Action:
         self.state = state
 
-        epsilon = min((1 - 0.01) * len(self.memory) / 10000 + 0.01, 0.95)
+        epsilon = min((1 - 0.001) * len(self.memory) / 10000 + 0.001, 0.90)
         # print(f'epsilon: {epsilon}')
         if random.random() > epsilon:
             self.action = random.choice(self.actions)
