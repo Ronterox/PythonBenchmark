@@ -61,12 +61,12 @@ class ModelAgent(Agent):
         super().__init__(env, act_every, enabled)
         self.model = model
         self.memory: deque[Memory] = deque(maxlen=100_000)
-        self.epsilon = .0
+        self.epsilon = 1.
 
     def get_action(self, state: State) -> Action:
         self.state = state
 
-        if random.random() > self.epsilon:
+        if random.random() < self.epsilon:
             self.action = random.choice(self.actions)
             return self.action
 

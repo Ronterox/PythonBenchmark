@@ -9,7 +9,7 @@ from global_types import Memory
 
 
 class QModel(nn.Module):
-    def __init__(self, input_size: int, hidden_size: int, output_size: int, lr: float = 0.01):
+    def __init__(self, input_size: int, hidden_size: int, output_size: int, lr: float = 0.001):
         super(QModel, self).__init__()
         self.l1 = nn.Linear(input_size, hidden_size)
         self.relu = nn.ReLU()
@@ -20,6 +20,7 @@ class QModel(nn.Module):
     def set_env(self, env: Snake) -> 'QModel':
         self.block_size = env.block_size
         self.width, self.width = env.width, env.width
+        self.env = env
         return self
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -57,7 +58,7 @@ class QModel(nn.Module):
     def transform_states(self, states: list[State]) -> torch.Tensor:
         return torch.stack([self.transform_state(state) for state in states])
 
-    def learn(self, memory: deque[Memory], batch_size: int, gamma: float):
+    def learn(self, memory: deque[Memory] | list[Memory], batch_size: int, gamma: float):
         if len(memory) < batch_size:
             batch = memory
         else:

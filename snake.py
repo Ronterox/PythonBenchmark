@@ -3,6 +3,7 @@ import random
 
 from enum import Enum
 from random import randint
+from copy import deepcopy
 
 from global_types import State
 
@@ -44,7 +45,7 @@ class Snake:
         self.tails = [pygame.Rect(self.head.x + blockx, self.head.y + blocky,
                                   self.block_size, self.block_size),
                       pygame.Rect(self.head.x + blockx * 2, self.head.y + blocky * 2,
-                                  self.block_size, self.block_size)]
+                                  self.block_size, self.block_size),]
 
         fruitx, fruity, self.fruitcolor = self.get_random_fruit()
         self.fruit = pygame.Rect(
@@ -64,7 +65,7 @@ class Snake:
         self.fruit.x, self.fruit.y = fruitx, fruity
         state = State(self.head.x, self.head.y,
                       self.fruit.x, self.fruit.y,
-                      self.direction.copy(), self.tails.copy())
+                      self.direction.copy(), deepcopy(self.tails))
         return 0, state, False
 
     def get_random_fruit(self) -> tuple[int, int, tuple[int, int, int]]:
@@ -97,7 +98,6 @@ class Snake:
         pygame.draw.rect(self.screen, self.fruitcolor, self.fruit)
 
         reward = 0
-
         if self.head.colliderect(self.fruit):
             self.fruit.x, self.fruit.y, self.fruitcolor = self.get_random_fruit()
             self.score += 1
@@ -130,11 +130,11 @@ class Snake:
 
         # Gym Attributes
         if not inside_width or not inside_height or not not_hit:
-            reward -= 10
+            reward = -10
 
         state = State(self.head.x, self.head.y,
                       self.fruit.x, self.fruit.y,
-                      self.direction.copy(), self.tails.copy())
+                      self.direction.copy(), deepcopy(self.tails))
         is_done = not self.run
         return reward, state, is_done
 
