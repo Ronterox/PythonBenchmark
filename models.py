@@ -9,7 +9,7 @@ from global_types import Memory
 
 
 class QModel(nn.Module):
-    def __init__(self, input_size: int, hidden_size: int, output_size: int, lr: float = 0.01):
+    def __init__(self, input_size: int, hidden_size: int, output_size: int, lr: float = 0.001):
         super(QModel, self).__init__()
         self.l1 = nn.Linear(input_size, hidden_size)
         self.relu = nn.ReLU()
@@ -49,9 +49,9 @@ class QModel(nn.Module):
 
     def learn(self, memory: deque[Memory], batch_size: int, gamma: float):
         if len(memory) < batch_size:
-            return
-
-        batch = random.sample(memory, batch_size)
+            batch = memory
+        else:
+            batch = random.sample(memory, batch_size)
         states, actions, rewards, next_states, dones = zip(*batch)
 
         next_states_tensor = self.transform_states(next_states)

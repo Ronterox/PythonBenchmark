@@ -7,12 +7,17 @@ from models import QModel
 from global_types import Memory
 
 NUM_GAMES = 10000
+# -1 for no limit
 FPS_LIMIT = -1
 RESOLUTION = 2
 
+# Agent has priority over the player
 ENABLE_AGENT = True
-AGENT_ACT_EVERY = 2
+AGENT_ACT_EVERY = 1
 AGENT_TYPE = ModelAgent
+
+# 0 for no limit
+REWARDS_PLOT_LIMIT = 0
 
 
 def print_results():
@@ -32,7 +37,7 @@ def signal_handler(__, _):
 signal.signal(signal.SIGINT, signal_handler)
 
 snake = Snake(FPS_LIMIT, RESOLUTION)
-model = QModel(input_size=8, hidden_size=16, output_size=3).set_env(snake)
+model = QModel(input_size=8, hidden_size=256, output_size=3).set_env(snake)
 agent = AGENT_TYPE(snake, model, AGENT_ACT_EVERY, ENABLE_AGENT)
 
 plot = Plot()
@@ -55,19 +60,25 @@ for i in range(NUM_GAMES):
         if agent.model is not None:
             agent.memory.append(
                 Memory(agent.state, agent.action, reward, state, is_done))
-            if j % 5 == 0:
-                agent.model.learn(agent.memory, batch_size=64, gamma=0.95)
+            if (j + 1) % 10 == 0:
+                agent.model.learn(agent.memory, batch_size=100, gamma=0.9)
 
         total_reward += reward
         j += 1
 
+    output = f'Game {i + 1}/{NUM_GAMES} - Steps: {j} - Reward: {total_reward}'
+    if agent.model is not None:
+        agent.epsilon = min(0.95, i / NUM_GAMES * 25)
+        agent.model.learn(agent.memory, batch_size=1000, gamma=0.9)
+        output += f' - Epsilon: {agent.epsilon:.2f}'
+
     rewards.append(total_reward)
     mean_rewards.append(sum(rewards) / len(rewards))
-    print(f'Game {i + 1}/{NUM_GAMES}: {snake.score}, {j} steps')
+    print(output)
 
     if i % 10 == 0:
-        avg_reward = mean_rewards[-100:]
-        last_reward = rewards[-100:]
+        avg_reward = mean_rewards[-REWARDS_PLOT_LIMIT:]
+        last_reward = rewards[-REWARDS_PLOT_LIMIT:]
         print(f'Avg reward: {sum(avg_reward) / len(avg_reward)}')
         plot.clean() \
             .title(f'Game {i + 1}/{NUM_GAMES}') \
