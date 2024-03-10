@@ -1,3 +1,4 @@
+import argparse
 import signal
 import time
 import os
@@ -8,19 +9,31 @@ from agent import ModelAgent
 from models import QModel
 from global_types import Memory
 
-NUM_GAMES = 1000
+parser = argparse.ArgumentParser(description='Train a snake model')
+parser.add_argument('--load', type=str, help='Load a model', default="")
+parser.add_argument('--games', type=int,
+                    help='Number of games to play', default=100)
+parser.add_argument('--fps', type=int, help='FPS limit', default=-1)
+parser.add_argument('--headless', action=argparse.BooleanOptionalAction,
+                    help='Run the game without a window', default=True)
+parser.add_argument('--plot', action=argparse.BooleanOptionalAction,
+                    help='Plot the rewards', default=True)
+args = parser.parse_args()
+
+NUM_GAMES = args.games
 # -1 for no limit
-FPS_LIMIT = -1
+FPS_LIMIT = args.fps
 RESOLUTION = 2
 
 # Agent has priority over the player
 ENABLE_AGENT = True
-HEADLESS = True
+HEADLESS = args.headless
 AGENT_ACT_EVERY = 1
 AGENT_TYPE = ModelAgent
-LOAD_MODEL_PATH = ""
+LOAD_MODEL_PATH = args.load
 
 # 0 for no limit
+PLOT_REWARDS = args.plot
 REWARDS_PLOT_LIMIT = 0
 
 
@@ -63,7 +76,7 @@ for i in range(NUM_GAMES):
     total_reward = 0
     while snake.run and j < len(snake.tails) * 50:
         key = None
-        if IS_TRAINING and i % agent.act_every == 0:
+        if IS_TRAINING and j % agent.act_every == 0:
             key = agent.get_action_key(state)
 
         snake.check_events(key)
@@ -89,7 +102,7 @@ for i in range(NUM_GAMES):
     mean_rewards.append(sum(rewards) / len(rewards))
     print(output)
 
-    if i % 10 == 0:
+    if i % 10 == 0 and PLOT_REWARDS:
         avg_reward = mean_rewards[-REWARDS_PLOT_LIMIT:]
         last_reward = rewards[-REWARDS_PLOT_LIMIT:]
         print(f'Avg reward: {sum(avg_reward) / len(avg_reward)}')
@@ -101,9 +114,4 @@ for i in range(NUM_GAMES):
             .text(i, last_reward[-1], f'{last_reward[-1]}') \
             .text(i, avg_reward[-1], f'{avg_reward[-1]}') \
             .pause(0.1)
-
-
 close()
-if IS_TRAINING:
-    input("Press Enter to continue and run the model...")
-    plot.plt.close()
