@@ -38,21 +38,45 @@ class QModel(nn.Module):
         for tail in tails[1:]:
             tail.x, tail.y, tailbefore = tailbefore.x, tailbefore.y, tail.copy()
 
+        dangerRight = hx >= w - bs or (hx + bs, hy) in tails
+        dangerLeft = hx <= 0 or (hx - bs, hy) in tails
+        dangerDown = hy >= h - bs or (hx, hy + bs) in tails
+        dangerUp = hy <= 0 or (hx, hy - bs) in tails
+
+        dangerStraight = False
+        dangerRight = False
+        dangerLeft = False
+        if dir == Direction.RIGHT:
+            dangerStraight = dangerRight
+            dangerRight = dangerDown
+            dangerLeft = dangerUp
+        elif dir == Direction.LEFT:
+            dangerStraight = dangerLeft
+            dangerRight = dangerUp
+            dangerLeft = dangerDown
+        elif dir == Direction.DOWN:
+            dangerStraight = dangerDown
+            dangerRight = dangerLeft
+            dangerLeft = dangerRight
+        elif dir == Direction.UP:
+            dangerStraight = dangerUp
+            dangerRight = dangerRight
+            dangerLeft = dangerLeft
+
         return torch.tensor([
             fx > hx,  # food right
             fx < hx,  # food left
             fy > hy,  # food down
             fy < hy,  # food up
 
-            hx >= w - bs or (hx + bs, hy) in tails,  # wall right or tail right
-            hx <= 0 or (hx - bs, hy) in tails,  # wall left or tail left
-            hy >= h - bs or (hx, hy + bs) in tails,  # wall down or tail down
-            hy <= 0 or (hx, hy - bs) in tails,  # wall up or tail up
+            dangerStraight,
+            dangerRight,
+            dangerLeft,
 
-            dir == Direction.RIGHT,  # direction right
-            dir == Direction.LEFT,  # direction left
-            dir == Direction.DOWN,  # direction down
-            dir == Direction.UP,  # direction up
+            # dir == Direction.RIGHT,  # direction right
+            # dir == Direction.LEFT,  # direction left
+            # dir == Direction.DOWN,  # direction down
+            # dir == Direction.UP,  # direction up
         ], dtype=torch.float32)
 
     def transform_states(self, states: list[State]) -> torch.Tensor:

@@ -57,7 +57,7 @@ if HEADLESS:
     os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
 snake = Snake(FPS_LIMIT, RESOLUTION)
-model = QModel(input_size=12, hidden_size=256, output_size=3).set_env(snake)
+model = QModel(input_size=7, hidden_size=256, output_size=3).set_env(snake)
 agent = AGENT_TYPE(snake, model, AGENT_ACT_EVERY, ENABLE_AGENT)
 
 IS_TRAINING = agent.model is not None and ENABLE_AGENT
@@ -86,15 +86,18 @@ for i in range(NUM_GAMES):
         if IS_TRAINING:
             memory = Memory(agent.state, agent.action, reward, state, is_done)
             agent.memory.append(memory)
-            agent.model.learn([memory], batch_size=1, gamma=0.5)
+            # agent.model.learn([memory], batch_size=1, gamma=0.5)
 
         total_reward += reward
         j += 1
 
+        if reward > 0:
+            j = 0
+
     output = f'Game {i + 1}/{NUM_GAMES} - Steps: {j} - Reward: {total_reward}'
     if IS_TRAINING:
         agent.epsilon = max(0.1, agent.epsilon * 0.995)
-        agent.model.learn(agent.memory, batch_size=1024, gamma=0.5)
+        agent.model.learn(agent.memory, batch_size=1024, gamma=0.9)
         output += f' - Epsilon: {agent.epsilon:.2f}'
 
     rewards.append(total_reward)
