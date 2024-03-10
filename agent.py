@@ -37,9 +37,6 @@ class Agent(ABC):
         return Action.TURN_LEFT
 
     def get_action_key(self, state: State) -> int | None:
-        if not self.enabled:
-            return None
-
         action = self.get_action(state)
         direction = state.direction
 

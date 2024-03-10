@@ -32,6 +32,11 @@ class QModel(nn.Module):
         bs, w, h = self.block_size, self.width, self.width
         tails = state.tails
 
+        tailbefore = tails[0]
+        tailbefore.x, tailbefore.y = hx, hy
+        for tail in tails[1:]:
+            tail.x, tail.y, tailbefore = tailbefore.x, tailbefore.y, tail.copy()
+
         return torch.tensor([
             fx > hx,  # food right
             fx < hx,  # food left
@@ -77,3 +82,13 @@ class QModel(nn.Module):
         loss.backward()
 
         self.optimizer.step()
+
+    def save(self, path: str):
+        print(f"Saving model to {path}...")
+        torch.save(self.state_dict(), path)
+        print("Model saved")
+
+    def load(self, path: str):
+        print(f"Loading model from {path}...")
+        self.load_state_dict(torch.load(path))
+        print("Model loaded")

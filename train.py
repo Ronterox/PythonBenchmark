@@ -15,6 +15,7 @@ RESOLUTION = 2
 ENABLE_AGENT = True
 AGENT_ACT_EVERY = 1
 AGENT_TYPE = ModelAgent
+LOAD_MODEL_PATH = ""
 
 # 0 for no limit
 REWARDS_PLOT_LIMIT = 0
@@ -30,6 +31,8 @@ def print_results():
 def signal_handler(__, _):
     snake.finish()
     print_results()
+    if IS_TRAINING:
+        agent.model.save("model.pth")
     exit()
 
 
@@ -39,6 +42,12 @@ signal.signal(signal.SIGINT, signal_handler)
 snake = Snake(FPS_LIMIT, RESOLUTION)
 model = QModel(input_size=8, hidden_size=256, output_size=3).set_env(snake)
 agent = AGENT_TYPE(snake, model, AGENT_ACT_EVERY, ENABLE_AGENT)
+
+IS_TRAINING = agent.model is not None and ENABLE_AGENT
+
+if LOAD_MODEL_PATH:
+    agent.model.load(LOAD_MODEL_PATH)
+
 
 plot = Plot()
 rewards = []
@@ -50,14 +59,14 @@ for i in range(NUM_GAMES):
     total_reward = 0
     while snake.run and j < len(snake.tails) * 50:
         key = None
-        if i % agent.act_every == 0:
+        if IS_TRAINING and i % agent.act_every == 0:
             key = agent.get_action_key(state)
 
         snake.check_events(key)
         reward, state, is_done = snake.update()
         snake.clock.tick(snake.fps)
 
-        if agent.model is not None:
+        if IS_TRAINING:
             agent.memory.append(
                 Memory(agent.state, agent.action, reward, state, is_done))
             if (j + 1) % 10 == 0:
@@ -67,7 +76,7 @@ for i in range(NUM_GAMES):
         j += 1
 
     output = f'Game {i + 1}/{NUM_GAMES} - Steps: {j} - Reward: {total_reward}'
-    if agent.model is not None:
+    if IS_TRAINING:
         agent.epsilon = min(0.95, i / NUM_GAMES * 25)
         agent.model.learn(agent.memory, batch_size=1000, gamma=0.9)
         output += f' - Epsilon: {agent.epsilon:.2f}'

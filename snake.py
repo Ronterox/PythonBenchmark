@@ -95,10 +95,10 @@ class Snake:
                         self.direction = direction
 
     def update(self) -> tuple[int, State, bool]:
-        reward = 0
-
         self.screen.fill((0, 0, 0))
         pygame.draw.rect(self.screen, self.fruitcolor, self.fruit)
+
+        reward = 0
 
         if self.head.colliderect(self.fruit):
             self.fruit.x, self.fruit.y, self.fruitcolor = self.get_random_fruit()
@@ -116,10 +116,8 @@ class Snake:
         self.head.y += self.direction[1] * self.block_size
         pygame.draw.rect(self.screen, self.rect_color, self.head)
         for tail in self.tails:
-            tmp = tail.copy()
-            tail.x, tail.y = tailbefore.x, tailbefore.y
+            tail.x, tail.y, tailbefore = tailbefore.x, tailbefore.y, tail.copy()
             pygame.draw.rect(self.screen, self.rect_color, tail)
-            tailbefore = tmp
 
         text = self.font.render(f"Score: {self.score}", True, (255, 255, 255))
         self.screen.blit(text, (10, 10))
