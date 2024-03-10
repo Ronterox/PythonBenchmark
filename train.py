@@ -24,7 +24,12 @@ LOAD_MODEL_PATH = ""
 REWARDS_PLOT_LIMIT = 0
 
 
-def print_results():
+def close():
+    snake.finish()
+
+    if IS_TRAINING:
+        agent.model.save("model.pth")
+
     games, total, maximum = len(rewards), sum(rewards), max(rewards)
     print(f'\nAverage reward: {total / games} on {games} games')
     print(f'Total Rewards: {total}')
@@ -32,22 +37,14 @@ def print_results():
     print(f'Time: {time.time() - time_start:.2f}s')
 
 
-def signal_handler(__, _):
-    snake.finish()
-    print_results()
-    if IS_TRAINING:
-        agent.model.save("model.pth")
-    exit()
-
-
 # Gracefully exit the program, but still save the results
-signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGINT, lambda _sig, _: close() or exit())
 
 if HEADLESS:
     os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
 snake = Snake(FPS_LIMIT, RESOLUTION)
-model = QModel(input_size=8, hidden_size=256, output_size=3).set_env(snake)
+model = QModel(input_size=12, hidden_size=256, output_size=3).set_env(snake)
 agent = AGENT_TYPE(snake, model, AGENT_ACT_EVERY, ENABLE_AGENT)
 
 IS_TRAINING = agent.model is not None and ENABLE_AGENT
@@ -64,7 +61,7 @@ for i in range(NUM_GAMES):
 
     j = 0
     total_reward = 0
-    while snake.run and j < len(snake.tails) * 100:
+    while snake.run and j < len(snake.tails) * 50:
         key = None
         if IS_TRAINING and i % agent.act_every == 0:
             key = agent.get_action_key(state)
@@ -84,7 +81,7 @@ for i in range(NUM_GAMES):
 
     output = f'Game {i + 1}/{NUM_GAMES} - Steps: {j} - Reward: {total_reward}'
     if IS_TRAINING:
-        agent.epsilon = 0.6 + i / NUM_GAMES * 0.4
+        agent.epsilon = 0.6 + 0.4 * i / NUM_GAMES
         agent.model.learn(agent.memory, batch_size=1024, gamma=0.5)
         output += f' - Epsilon: {agent.epsilon:.2f}'
 
@@ -106,5 +103,7 @@ for i in range(NUM_GAMES):
             .pause(0.1)
 
 
-snake.finish()
-print_results()
+close()
+if IS_TRAINING:
+    input("Press Enter to continue and run the model...")
+    plot.plt.close()

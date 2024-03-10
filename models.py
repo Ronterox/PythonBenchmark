@@ -4,7 +4,7 @@ import random
 from torch import nn
 from collections import deque
 
-from snake import Snake, State
+from snake import Direction, Snake, State
 from global_types import Memory
 
 
@@ -30,7 +30,7 @@ class QModel(nn.Module):
     def transform_state(self, state: State) -> torch.Tensor:
         hx, hy, fx, fy = state.headx, state.heady, state.fruitx, state.fruity
         bs, w, h = self.block_size, self.width, self.width
-        tails = state.tails
+        tails, dir = state.tails, state.direction
 
         tailbefore = tails[0]
         tailbefore.x, tailbefore.y = hx, hy
@@ -46,7 +46,12 @@ class QModel(nn.Module):
             hx >= w - bs or (hx + bs, hy) in tails,  # wall right or tail right
             hx <= 0 or (hx - bs, hy) in tails,  # wall left or tail left
             hy >= h - bs or (hx, hy + bs) in tails,  # wall down or tail down
-            hy <= 0 or (hx, hy - bs) in tails  # wall up or tail up
+            hy <= 0 or (hx, hy - bs) in tails,  # wall up or tail up
+
+            dir == Direction.RIGHT,  # direction right
+            dir == Direction.LEFT,  # direction left
+            dir == Direction.DOWN,  # direction down
+            dir == Direction.UP,  # direction up
         ], dtype=torch.float32)
 
     def transform_states(self, states: list[State]) -> torch.Tensor:
