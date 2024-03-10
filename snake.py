@@ -1,6 +1,5 @@
 import pygame
 import random
-import os
 
 from enum import Enum
 from random import randint
@@ -15,16 +14,15 @@ class Direction(Enum):
     LEFT = [-1, 0]
 
 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
-
-pygame.init()
-
 DIRECTIONS = [direction.value for direction in Direction]
 KEYS = [pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_LEFT]
 
 
 class Snake:
     def __init__(self, fps, resolution):
+        if not pygame.get_init():
+            pygame.init()
+
         self.run = True
         self.fps = fps
         self.resolution = resolution

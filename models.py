@@ -9,7 +9,7 @@ from global_types import Memory
 
 
 class QModel(nn.Module):
-    def __init__(self, input_size: int, hidden_size: int, output_size: int, lr: float = 0.001):
+    def __init__(self, input_size: int, hidden_size: int, output_size: int, lr: float = 0.01):
         super(QModel, self).__init__()
         self.l1 = nn.Linear(input_size, hidden_size)
         self.relu = nn.ReLU()
