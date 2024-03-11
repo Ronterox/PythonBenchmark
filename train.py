@@ -15,7 +15,7 @@ parser.add_argument('--games', type=int,
                     help='Number of games to play', default=1000)
 parser.add_argument('--fps', type=int, help='FPS limit', default=-1)
 parser.add_argument('--headless', action=argparse.BooleanOptionalAction,
-                    help='Run the game without a window', default=True)
+                    help='Run the game without a window', default=False)
 parser.add_argument('--plot', action=argparse.BooleanOptionalAction,
                     help='Plot the rewards', default=True)
 args = parser.parse_args()
@@ -74,7 +74,7 @@ for i in range(NUM_GAMES):
 
     j = 0
     total_reward = 0
-    while snake.run and j < len(snake.tails) * 100:
+    while snake.run and j < (len(snake.tails) + 1) * 50:
         key = None
         if IS_TRAINING and j % agent.act_every == 0:
             key = agent.get_action_key(state)
@@ -84,9 +84,12 @@ for i in range(NUM_GAMES):
         snake.clock.tick(snake.fps)
 
         if IS_TRAINING:
+            if (j + 1) >= (len(snake.tails) + 1) * 50:
+                reward = -10
             memory = Memory(agent.state, agent.action, reward, state, is_done)
-            agent.memory.append(memory)
+            agent.epsilon = 80 - i
             agent.model.learn([memory], batch_size=1, gamma=0.9)
+            agent.memory.append(memory)
 
         total_reward += reward
         j += 1
@@ -96,7 +99,8 @@ for i in range(NUM_GAMES):
 
     output = f'Game {i + 1}/{NUM_GAMES} - Steps: {j} - Reward: {total_reward}'
     if IS_TRAINING:
-        agent.epsilon = max(0.1, agent.epsilon * 0.995)
+        # agent.epsilon = max(0.1, agent.epsilon * 0.995)
+        agent.epsilon = 80 - i
         agent.model.learn(agent.memory, batch_size=1024, gamma=0.9)
         output += f' - Epsilon: {agent.epsilon:.2f}'
 

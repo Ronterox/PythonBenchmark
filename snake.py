@@ -129,13 +129,15 @@ class Snake:
         pygame.display.update()
 
         # Gym Attributes
-        if not inside_width or not inside_height or not not_hit:
+        is_done = not self.run
+
+        if is_done:
             reward = -10
 
         state = State(self.head.x, self.head.y,
                       self.fruit.x, self.fruit.y,
                       self.direction.copy(), deepcopy(self.tails))
-        is_done = not self.run
+
         return reward, state, is_done
 
     def finish(self):

@@ -20,7 +20,6 @@ class QModel(nn.Module):
     def set_env(self, env: Snake) -> 'QModel':
         self.block_size = env.block_size
         self.width, self.width = env.width, env.width
-        self.env = env
         return self
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -46,19 +45,25 @@ class QModel(nn.Module):
         dangerStraight = False
         dangerRight = False
         dangerLeft = False
-        if dir == Direction.RIGHT:
+
+        dir_r = dir == Direction.RIGHT
+        dir_l = dir == Direction.LEFT
+        dir_d = dir == Direction.DOWN
+        dir_u = dir == Direction.UP
+
+        if dir_r:
             dangerStraight = dangerRight
             dangerRight = dangerDown
             dangerLeft = dangerUp
-        elif dir == Direction.LEFT:
+        elif dir_l:
             dangerStraight = dangerLeft
             dangerRight = dangerUp
             dangerLeft = dangerDown
-        elif dir == Direction.DOWN:
+        elif dir_d:
             dangerStraight = dangerDown
             dangerRight = dangerLeft
             dangerLeft = dangerRight
-        elif dir == Direction.UP:
+        elif dir_u:
             dangerStraight = dangerUp
             dangerRight = dangerRight
             dangerLeft = dangerLeft
@@ -73,10 +78,10 @@ class QModel(nn.Module):
             dangerRight,
             dangerLeft,
 
-            dir == Direction.RIGHT,  # direction right
-            dir == Direction.LEFT,  # direction left
-            dir == Direction.DOWN,  # direction down
-            dir == Direction.UP,  # direction up
+            dir_r,  # direction right
+            dir_l,  # direction left
+            dir_d,  # direction down
+            dir_u,  # direction up
         ], dtype=torch.float32)
 
     def transform_states(self, states: list[State]) -> torch.Tensor:
