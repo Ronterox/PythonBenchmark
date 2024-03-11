@@ -73,10 +73,10 @@ class QModel(nn.Module):
             dangerRight,
             dangerLeft,
 
-            # dir == Direction.RIGHT,  # direction right
-            # dir == Direction.LEFT,  # direction left
-            # dir == Direction.DOWN,  # direction down
-            # dir == Direction.UP,  # direction up
+            dir == Direction.RIGHT,  # direction right
+            dir == Direction.LEFT,  # direction left
+            dir == Direction.DOWN,  # direction down
+            dir == Direction.UP,  # direction up
         ], dtype=torch.float32)
 
     def transform_states(self, states: list[State]) -> torch.Tensor:
