@@ -62,14 +62,14 @@ class Snake:
 
         state = State(self.head.x, self.head.y,
                       self.fruit.x, self.fruit.y,
-                      self.direction.copy(), deepcopy(self.tails))
+                      deepcopy(self.direction), deepcopy(self.tails))
         return 0, state, False
 
     def get_random_fruit(self) -> tuple[int, int, tuple[int, int, int]]:
         bs = self.block_size
-        limitx, limity = self.width - bs, self.height - bs
+        limitx, limity = (self.width - bs) // bs, (self.height - bs) // bs
 
-        randx, randy = randint(0, limitx), randint(0, limity)
+        randx, randy = randint(0, limitx * bs), randint(0, limity * bs)
         randcolor = (randint(0, 255), randint(0, 255), randint(0, 255))
 
         return randx, randy, randcolor
@@ -95,16 +95,6 @@ class Snake:
         pygame.draw.rect(self.screen, self.fruitcolor, self.fruit)
 
         reward = 0
-        if self.head.colliderect(self.fruit):
-            self.fruit.x, self.fruit.y, self.fruitcolor = self.get_random_fruit()
-            self.score += 1
-            reward = 10
-
-            last_tail = self.tails[-1]
-            tail = pygame.Rect(last_tail.x + self.block_size,
-                               last_tail.y + self.block_size,
-                               self.block_size, self.block_size)
-            self.tails.append(tail)
 
         tailbefore = self.head.copy()
         self.head.x += self.direction[0] * self.block_size
@@ -123,17 +113,27 @@ class Snake:
         not_hit = self.head not in self.tails
 
         self.run = self.run and inside_width and inside_height and not_hit
-        pygame.display.update()
 
-        # Gym Attributes
         is_done = not self.run
-
         if is_done:
             reward = -10
 
+        if self.head.colliderect(self.fruit):
+            self.fruit.x, self.fruit.y, self.fruitcolor = self.get_random_fruit()
+            self.score += 1
+            reward = 10
+
+            last_tail = self.tails[-1]
+            tail = pygame.Rect(last_tail.x + self.block_size,
+                               last_tail.y + self.block_size,
+                               self.block_size, self.block_size)
+            self.tails.append(tail)
+
         state = State(self.head.x, self.head.y,
                       self.fruit.x, self.fruit.y,
-                      self.direction.copy(), deepcopy(self.tails))
+                      deepcopy(self.direction), deepcopy(self.tails))
+
+        pygame.display.update()
 
         return reward, state, is_done
 

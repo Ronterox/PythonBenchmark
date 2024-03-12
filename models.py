@@ -3,6 +3,7 @@ import random
 
 from torch import nn
 from collections import deque
+from copy import deepcopy
 
 from snake import Direction, Snake, State
 from global_types import Memory
@@ -19,7 +20,7 @@ class QModel(nn.Module):
 
     def set_env(self, env: Snake) -> 'QModel':
         self.block_size = env.block_size
-        self.width, self.width = env.width, env.width
+        self.width, self.height = env.width, env.height
         return self
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -29,13 +30,13 @@ class QModel(nn.Module):
 
     def transform_state(self, state: State) -> torch.Tensor:
         hx, hy, fx, fy = state.headx, state.heady, state.fruitx, state.fruity
-        bs, w, h = self.block_size, self.width, self.width
-        tails, dir = state.tails, state.direction
+        bs, w, h = self.block_size, self.width, self.height
+        tails, dir = deepcopy(state.tails), state.direction
 
-        dangerRight = hx + bs >= w - bs
-        dangerLeft = hx - bs <= 0
-        dangerDown = hy + bs >= h - bs
-        dangerUp = hy - bs <= 0
+        dangerRight = (hx + bs) >= (w - bs)
+        dangerLeft = (hx - bs) <= 0
+        dangerDown = (hy + bs) >= (h - bs)
+        dangerUp = (hy - bs) <= 0
 
         hr = hx + bs, hy
         hl = hx - bs, hy
@@ -61,10 +62,10 @@ class QModel(nn.Module):
         dangerRight = False
         dangerLeft = False
 
-        dir_r = dir == Direction.RIGHT
-        dir_l = dir == Direction.LEFT
-        dir_d = dir == Direction.DOWN
-        dir_u = dir == Direction.UP
+        dir_r = dir == Direction.RIGHT.value
+        dir_l = dir == Direction.LEFT.value
+        dir_d = dir == Direction.DOWN.value
+        dir_u = dir == Direction.UP.value
 
         if dir_r:
             dangerStraight = dangerRight
@@ -84,19 +85,19 @@ class QModel(nn.Module):
             dangerLeft = dangerLeft
 
         return torch.tensor([
-            fx > hx,  # food right
-            fx < hx,  # food left
-            fy > hy,  # food down
-            fy < hy,  # food up
-
             dangerStraight,
             dangerRight,
             dangerLeft,
 
             dir_r,  # direction right
             dir_l,  # direction left
-            dir_d,  # direction down
             dir_u,  # direction up
+            dir_d,  # direction down
+
+            fx > hx,  # food right
+            fx < hx,  # food left
+            fy > hy,  # food down
+            fy < hy,  # food up
         ], dtype=torch.float32)
 
     def transform_states(self, states: list[State]) -> torch.Tensor:

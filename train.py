@@ -77,22 +77,23 @@ for i in range(NUM_GAMES):
     while snake.run and j < (len(snake.tails) + 1) * 100:
         key = None
         if IS_TRAINING and j % agent.act_every == 0:
+            agent.epsilon = 0.4 - i * 0.005
             key = agent.get_action_key(state)
 
         snake.check_events(key)
+        agent.model.transform_state(state)
         reward, state, is_done = snake.update()
-        snake.clock.tick(snake.fps)
 
         if IS_TRAINING:
             if (j + 1) >= (len(snake.tails) + 1) * 100:
                 reward = -10
             memory = Memory(agent.state, agent.action, reward, state, is_done)
-            agent.epsilon = 0.4 - i * 0.005
             agent.model.learn([memory], batch_size=1, gamma=0.9)
             agent.memory.append(memory)
 
         total_reward += reward
         j += 1
+        snake.clock.tick(snake.fps)
 
     output = f'Game {i + 1}/{NUM_GAMES} - Steps: {j} - Reward: {total_reward}'
     if IS_TRAINING:

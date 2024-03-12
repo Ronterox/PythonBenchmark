@@ -1,3 +1,4 @@
 ipython==8.12.3
 matplotlib==3.8.3
 pygame_ce==2.4.1
+torch==2.2.1+cpu
