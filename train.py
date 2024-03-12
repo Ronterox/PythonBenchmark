@@ -26,7 +26,7 @@ FPS_LIMIT = args.fps
 RESOLUTION = 2
 
 # Agent has priority over the player
-ENABLE_AGENT = False
+ENABLE_AGENT = True
 HEADLESS = args.headless
 AGENT_ACT_EVERY = 1
 AGENT_TYPE = ModelAgent
@@ -82,7 +82,6 @@ for i in range(NUM_GAMES):
         snake.check_events(key)
         reward, state, is_done = snake.update()
         snake.clock.tick(snake.fps)
-        model.transform_state(state)
 
         if IS_TRAINING:
             if (j + 1) >= (len(snake.tails) + 1) * 100:

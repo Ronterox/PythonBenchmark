@@ -32,15 +32,30 @@ class QModel(nn.Module):
         bs, w, h = self.block_size, self.width, self.width
         tails, dir = state.tails, state.direction
 
+        dangerRight = hx + bs >= w - bs
+        dangerLeft = hx - bs <= 0
+        dangerDown = hy + bs >= h - bs
+        dangerUp = hy - bs <= 0
+
+        hr = hx + bs, hy
+        hl = hx - bs, hy
+        hd = hx, hy + bs
+        hu = hx, hy - bs
+
         tailbefore = tails[0]
         tailbefore.x, tailbefore.y = hx, hy
         for tail in tails[1:]:
             tail.x, tail.y, tailbefore = tailbefore.x, tailbefore.y, tail.copy()
 
-        dangerRight = hx + bs >= w - bs or (hx + bs, hy) in tails
-        dangerLeft = hx - bs <= 0 or (hx - bs, hy) in tails
-        dangerDown = hy + bs >= h - bs or (hx, hy + bs) in tails
-        dangerUp = hy - bs <= 0 or (hx, hy - bs) in tails
+            pos = tail.x, tail.y
+            if pos == hr:
+                dangerRight = True
+            elif pos == hl:
+                dangerLeft = True
+            elif pos == hd:
+                dangerDown = True
+            elif pos == hu:
+                dangerUp = True
 
         dangerStraight = False
         dangerRight = False
