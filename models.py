@@ -12,8 +12,8 @@ class QModel(nn.Module):
     def __init__(self, input_size: int, hidden_size: int, output_size: int, lr: float = 0.001):
         super(QModel, self).__init__()
         self.l1 = nn.Linear(input_size, hidden_size)
-        self.relu = nn.ReLU()
         self.l2 = nn.Linear(hidden_size, output_size)
+        self.relu = nn.ReLU()
         self.loss = nn.MSELoss()
         self.optimizer = torch.optim.Adam(self.parameters(), lr)
 
@@ -37,10 +37,10 @@ class QModel(nn.Module):
         for tail in tails[1:]:
             tail.x, tail.y, tailbefore = tailbefore.x, tailbefore.y, tail.copy()
 
-        dangerRight = hx >= w - bs or (hx + bs, hy) in tails
-        dangerLeft = hx <= 0 or (hx - bs, hy) in tails
-        dangerDown = hy >= h - bs or (hx, hy + bs) in tails
-        dangerUp = hy <= 0 or (hx, hy - bs) in tails
+        dangerRight = hx + bs >= w - bs or (hx + bs, hy) in tails
+        dangerLeft = hx - bs <= 0 or (hx - bs, hy) in tails
+        dangerDown = hy + bs >= h - bs or (hx, hy + bs) in tails
+        dangerUp = hy - bs <= 0 or (hx, hy - bs) in tails
 
         dangerStraight = False
         dangerRight = False
@@ -92,21 +92,21 @@ class QModel(nn.Module):
             batch = memory
         else:
             batch = random.sample(memory, batch_size)
+
         states, actions, rewards, next_states, dones = zip(*batch)
 
+        states_tensor = self.transform_states(states)
+        actions_tensor = torch.tensor([action.value for action in actions])
+        rewards_tensor = torch.tensor(rewards, dtype=torch.int32)
         next_states_tensor = self.transform_states(next_states)
-        q_values = self.forward(next_states_tensor)
-
-        values, _ = torch.max(q_values, dim=1)
-        rewards_tensor = torch.tensor(rewards, dtype=torch.float32)
         dones_tensor = torch.tensor(dones, dtype=torch.int32)
+
+        next_q_values = self.forward(next_states_tensor)
+        values, _ = torch.max(next_q_values, dim=1)
 
         q_results = rewards_tensor + gamma * values * (1 - dones_tensor)
 
-        states_tensor = self.transform_states(states)
         predictions = self.forward(states_tensor)
-
-        actions_tensor = torch.tensor([action.value for action in actions])
         action_indexes = torch.argmax(actions_tensor, 1, keepdim=True)
 
         targets = predictions.clone()

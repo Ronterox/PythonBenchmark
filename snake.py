@@ -30,13 +30,20 @@ class Snake:
         self.width, self.height = 320 * resolution, 240 * resolution
         self.res_factor = self.width // 320
         self.block_size = 10 * self.res_factor
+        self.rect_color = (255, 0, 0)
+        self.score = 0
 
         self.font = pygame.font.SysFont('Arial', 20 * self.res_factor)
         self.screen = pygame.display.set_mode((self.width, self.height))
+        self.clock = pygame.time.Clock()
+
+        self.reset()
+
+    def reset(self) -> tuple[int, State, bool]:
+        self.run = True
 
         self.head = pygame.Rect(self.width // 2, self.height // 2,
                                 self.block_size, self.block_size)
-        self.rect_color = (255, 0, 0)
         self.direction = random.choice(DIRECTIONS)
 
         dx, dy = self.direction
@@ -47,22 +54,12 @@ class Snake:
                       pygame.Rect(self.head.x + blockx * 2, self.head.y + blocky * 2,
                                   self.block_size, self.block_size),]
 
+        self.score = 0
+
         fruitx, fruity, self.fruitcolor = self.get_random_fruit()
         self.fruit = pygame.Rect(
             fruitx, fruity, self.block_size, self.block_size)
-        self.score = 0
 
-        self.clock = pygame.time.Clock()
-
-    def reset(self) -> tuple[int, State, bool]:
-        self.run = True
-        self.head.x, self.head.y = self.width // 2, self.height // 2
-        self.direction = random.choice(DIRECTIONS)
-        self.tails = self.tails[:2]
-        self.score = 0
-
-        fruitx, fruity, self.fruitcolor = self.get_random_fruit()
-        self.fruit.x, self.fruit.y = fruitx, fruity
         state = State(self.head.x, self.head.y,
                       self.fruit.x, self.fruit.y,
                       self.direction.copy(), deepcopy(self.tails))
