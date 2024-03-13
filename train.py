@@ -15,15 +15,17 @@ parser.add_argument('--games', type=int,
                     help='Number of games to play', default=1000)
 parser.add_argument('--fps', type=int, help='FPS limit', default=-1)
 parser.add_argument('--headless', action=argparse.BooleanOptionalAction,
-                    help='Run the game without a window', default=True)
+                    help='Run the game without a window', default=False)
 parser.add_argument('--plot', action=argparse.BooleanOptionalAction,
                     help='Plot the rewards', default=True)
+parser.add_argument('--resolution', type=int,
+                    help='Resolution factor', default=1)
 args = parser.parse_args()
 
 NUM_GAMES = args.games
 # -1 for no limit
 FPS_LIMIT = args.fps
-RESOLUTION = 2
+RESOLUTION = args.resolution
 
 # Agent has priority over the player
 ENABLE_AGENT = True
@@ -40,7 +42,7 @@ REWARDS_PLOT_LIMIT = 0
 def close():
     snake.finish()
 
-    if IS_TRAINING and LOAD_MODEL_PATH:
+    if IS_TRAINING and not LOAD_MODEL_PATH:
         agent.model.save("model.pth")
 
     games, total, maximum = len(rewards), sum(rewards), max(rewards)
@@ -85,14 +87,15 @@ for i in range(NUM_GAMES):
         reward, state, is_done = snake.update()
 
         if IS_TRAINING:
-            # if (j + 1) >= (len(snake.tails) + 1) * 100:
-            #     reward = -10
+            if (j + 1) >= (len(snake.tails) + 1) * 100:
+                reward = -10
             memory = Memory(agent.state, agent.action, reward, state, is_done)
             agent.model.learn([memory], batch_size=1, gamma=0.5)
             agent.memory.append(memory)
 
         total_reward += reward
         j += 1
+
         snake.clock.tick(snake.fps)
 
     output = f'Game {i + 1}/{NUM_GAMES} - Steps: {j} - Reward: {total_reward}'
