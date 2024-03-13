@@ -70,8 +70,11 @@ if LOAD_MODEL_PATH:
 plot = Plot()
 rewards = []
 mean_rewards = []
+times = []
+times_avg = []
 time_start = time.time()
 for i in range(NUM_GAMES):
+    start = time.time()
     reward, state, is_done = snake.reset()
 
     j = 0
@@ -79,7 +82,10 @@ for i in range(NUM_GAMES):
     while snake.run and j < (len(snake.tails) + 1) * 100:
         key = None
         if IS_TRAINING and j % agent.act_every == 0:
-            agent.epsilon = max(0.1, 0.4 - 0.4 * i / NUM_GAMES)
+            if LOAD_MODEL_PATH:
+                agent.epsilon = 0.05
+            else:
+                agent.epsilon = max(0.1, 0.4 - 0.4 * i / NUM_GAMES)
             key = agent.get_action_key(state)
 
         snake.check_events(key)
@@ -100,11 +106,19 @@ for i in range(NUM_GAMES):
 
     output = f'Game {i + 1}/{NUM_GAMES} - Steps: {j} - Reward: {total_reward}'
     if IS_TRAINING:
-        agent.model.learn(agent.memory, batch_size=1024, gamma=0.5)
+        agent.model.learn(agent.memory, batch_size=256, gamma=0.5)
         output += f' - Epsilon: {agent.epsilon:.3f}'
 
     rewards.append(total_reward)
     mean_rewards.append(sum(rewards) / len(rewards))
+
+    times.append(time.time() - start)
+    times = times[-10:]
+    time_avg = sum(times) / len(times)
+    times_avg.append(time_avg)
+
+    eta = sum(times_avg) / len(times_avg) * (NUM_GAMES - i)
+    print(f"ETA: {eta:.2f}s ({int(eta // 60)}m {int(eta % 60)}s)")
     print(output)
 
     if i % 10 == 0 and PLOT_REWARDS:
