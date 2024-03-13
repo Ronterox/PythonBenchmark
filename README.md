@@ -1,46 +1,56 @@
-# Snake Game with Random Agent
+# Snake Game Training Program
 
-> Random readme created by ChatGPT lol (Is all wrong)
-
-## Introduction
-This Python script implements a simple Snake game using the `snake` module along with a random agent for controlling the snake's movements. The game is run for a specified number of games, and the results are plotted using the `plotting` module.
-
-## Requirements
-- Python 3.x
-- Dependencies: `signal`, `snake`, `plotting`, `agent`
+This program trains a snake model using reinforcement learning. It provides options for setting up the training environment and monitoring the training progress through reward plotting.
 
 ## Usage
-1. Ensure you have the required dependencies installed.
-   ```bash
-   pip install signal snake plotting agent
-   ```
 
-2. Run the script.
-   ```bash
-   python snake_game.py
-   ```
+To use this program, follow the instructions below:
 
-3. The game will run for the specified number of games, and the results will be printed and plotted.
+### Prerequisites
 
-## Configuration
-- `NUM_GAMES`: Number of games to play.
-- `FPS_LIMIT`: Frames per second limit. Set to -1 for unlimited.
-- `RESOLUTION`: Grid resolution for the game.
+- Python 3.x
+- Required libraries: `argparse`, `signal`, `time`, `os`
+- Custom modules: `snake`, `plotting`, `agent`, `models`, `global_types`
 
-## Results
-The script prints and plots the results after each game, displaying the average score, total score, and maximum score achieved during the specified number of games.
+### Running the Program
 
-## Signal Handling
-The script gracefully handles the interrupt signal (Ctrl+C) by finishing the current game, printing the results, and then exiting.
+Run the following command in your terminal:
 
-## Components
-- `snake.py`: Module containing the Snake class.
-- `plotting.py`: Module for creating and updating plots.
-- `agent.py`: Module containing the RandomAgent class.
+```bash
+python train_snake.py [--model MODEL] [--games GAMES] [--fps FPS] [--headless] [--plot] [--resolution RESOLUTION]
+```
 
-## Acknowledgments
-- The Snake game logic is implemented in the `Snake` class.
-- The agent controlling the snake's movements is a simple `RandomAgent`.
-- Results are visualized using the `Plot` class.
+- `--model MODEL`: Specify the path to a pre-trained model to continue training from a checkpoint.
+- `--games GAMES`: Number of games to play for training. Default is 1000.
+- `--fps FPS`: Set the FPS (frames per second) limit. Default is -1 (no limit).
+- `--headless`: Run the game without a window (useful for server environments).
+- `--plot`: Enable plotting of rewards during training. Default is True.
+- `--resolution RESOLUTION`: Set the resolution factor. Default is 1.
 
-Feel free to explore and modify the script to experiment with different agents, game settings, or visualization methods. Enjoy the Snake game!
+## Files
+
+- `train_snake.py`: Main Python script for training the snake model.
+- `snake.py`: Module containing the Snake game implementation.
+- `plotting.py`: Module for plotting rewards during training.
+- `agent.py`: Module defining the agent for the snake game.
+- `models.py`: Module containing the definition of the Q-learning model.
+- `global_types.py`: Module containing global types used in the program.
+
+## Exiting the Program
+
+You can gracefully exit the program by pressing `Ctrl + C`. The program will save the results before exiting.
+
+## Output
+
+The program outputs the following information during training:
+
+- Average reward per game
+- Total rewards accumulated
+- Maximum reward obtained and the corresponding game
+- Training time in seconds
+
+## Notes
+
+- The program uses Q-learning for training the snake model.
+- The agent has priority over the player if both are enabled.
+- If training is interrupted, the program saves the trained model.
