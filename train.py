@@ -30,9 +30,11 @@ RESOLUTION = args.resolution
 # Agent has priority over the player
 ENABLE_AGENT = True
 HEADLESS = args.headless
-AGENT_ACT_EVERY = 1
 AGENT_TYPE = ModelAgent
 LOAD_MODEL_PATH = args.model
+
+BATCH_SIZE = 256
+PATIENCE = 0.5
 
 # 0 for no limit
 PLOT_REWARDS = args.plot
@@ -60,32 +62,29 @@ if HEADLESS:
 
 snake = Snake(FPS_LIMIT, RESOLUTION)
 model = QModel(input_size=11, hidden_size=256, output_size=3).set_env(snake)
-agent = AGENT_TYPE(snake, model, AGENT_ACT_EVERY, ENABLE_AGENT)
+agent = AGENT_TYPE(snake, model, ENABLE_AGENT)
 
 IS_TRAINING = agent.model is not None and ENABLE_AGENT
 
 if LOAD_MODEL_PATH:
     agent.model.load(LOAD_MODEL_PATH)
+    agent.epsilon = 0.05
 
 plot = Plot()
-rewards = []
-mean_rewards = []
-times = []
-times_avg = []
+rewards = mean_rewards = []
+times = times_avg = []
 time_start = time.time()
 for i in range(NUM_GAMES):
     start = time.time()
     reward, state, is_done = snake.reset()
 
-    j = 0
     total_reward = 0
-    while snake.run and j < (len(snake.tails) + 1) * 100:
+    if not LOAD_MODEL_PATH:
+        agent.epsilon = max(0.1, 0.4 - 0.4 * i / NUM_GAMES)
+
+    while snake.run:
         key = None
-        if IS_TRAINING and j % agent.act_every == 0:
-            if LOAD_MODEL_PATH:
-                agent.epsilon = 0.05
-            else:
-                agent.epsilon = max(0.1, 0.4 - 0.4 * i / NUM_GAMES)
+        if IS_TRAINING:
             key = agent.get_action_key(state)
 
         snake.check_events(key)
@@ -93,20 +92,16 @@ for i in range(NUM_GAMES):
         reward, state, is_done = snake.update()
 
         if IS_TRAINING:
-            if (j + 1) >= (len(snake.tails) + 1) * 100:
-                reward = -10
             memory = Memory(agent.state, agent.action, reward, state, is_done)
-            agent.model.learn([memory], batch_size=1, gamma=0.5)
+            agent.model.learn([memory], batch_size=1, gamma=PATIENCE)
             agent.memory.append(memory)
 
         total_reward += reward
-        j += 1
-
         snake.clock.tick(snake.fps)
 
-    output = f'Game {i + 1}/{NUM_GAMES} - Steps: {j} - Reward: {total_reward}'
+    output = f'Game {i + 1}/{NUM_GAMES} - Steps: {snake.steps} - Reward: {total_reward}'
     if IS_TRAINING:
-        agent.model.learn(agent.memory, batch_size=256, gamma=0.5)
+        agent.model.learn(agent.memory, batch_size=BATCH_SIZE, gamma=PATIENCE)
         output += f' - Epsilon: {agent.epsilon:.3f}'
 
     rewards.append(total_reward)

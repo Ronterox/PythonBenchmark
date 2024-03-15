@@ -24,14 +24,12 @@ class Snake:
         if not pygame.get_init():
             pygame.init()
 
-        self.run = True
         self.fps = fps
         self.resolution = resolution
         self.width, self.height = 320 * resolution, 240 * resolution
         self.res_factor = self.width // 320
         self.block_size = 10 * self.res_factor
         self.rect_color = (255, 0, 0)
-        self.score = 0
 
         self.font = pygame.font.SysFont('Arial', 20 * self.res_factor)
         self.screen = pygame.display.set_mode((self.width, self.height))
@@ -41,6 +39,7 @@ class Snake:
 
     def reset(self) -> tuple[int, State, bool]:
         self.run = True
+        self.steps = 0
 
         self.head = pygame.Rect(self.width // 2, self.height // 2,
                                 self.block_size, self.block_size)
@@ -94,8 +93,6 @@ class Snake:
         self.screen.fill((0, 0, 0))
         pygame.draw.rect(self.screen, self.fruitcolor, self.fruit)
 
-        reward = 0
-
         tailbefore = self.head.copy()
         self.head.x += self.direction[0] * self.block_size
         self.head.y += self.direction[1] * self.block_size
@@ -110,15 +107,15 @@ class Snake:
         x, y = self.head.x, self.head.y
         inside_width = x >= 0 and x + self.block_size <= self.width
         inside_height = y >= 0 and y + self.block_size <= self.height
+        not_took_long = self.steps < (len(self.tails) + 1) * 100
         not_hit = self.head not in self.tails
 
-        self.run = self.run and inside_width and inside_height and not_hit
+        self.run = not_took_long and inside_width and inside_height and not_hit
 
-        is_done = not self.run
-        if is_done:
+        reward = 0
+        if not self.run:
             reward = -10
-
-        if self.head.colliderect(self.fruit):
+        elif self.head.colliderect(self.fruit):
             self.fruit.x, self.fruit.y, self.fruitcolor = self.get_random_fruit()
             self.score += 1
             reward = 10
@@ -133,9 +130,10 @@ class Snake:
                       self.fruit.x, self.fruit.y,
                       deepcopy(self.direction), deepcopy(self.tails))
 
+        self.steps += 1
         pygame.display.update()
 
-        return reward, state, is_done
+        return reward, state, not self.run
 
     def finish(self):
         print(f"Your score was: {self.score}")

@@ -10,4 +10,4 @@ if [ ! -f "$MODEL" ]; then
     exit 1
 fi
 
-python train.py --games 1 --no-headless --no-plot --fps 15 --model "$MODEL"
+python train.py --games 1 --no-headless --no-plot --fps 15 --model "$MODEL" --resolution 3

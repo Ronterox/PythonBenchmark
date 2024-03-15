@@ -10,11 +10,10 @@ from global_types import Action, Memory
 
 
 class Agent(ABC):
-    def __init__(self, env: Snake, act_every: int = 1, enabled: bool = True):
+    def __init__(self, env: Snake, enabled: bool = True):
         self.env = env
         self.enabled = enabled
         self.actions = [action for action in Action]
-        self.act_every = act_every
 
     @abstractmethod
     def get_action(self, state: State) -> Action:
@@ -57,8 +56,8 @@ class RandomAgent(Agent):
 
 
 class ModelAgent(Agent):
-    def __init__(self, env: Snake, model: QModel,  act_every: int = 1, enabled: bool = True):
-        super().__init__(env, act_every, enabled)
+    def __init__(self, env: Snake, model: QModel,  enabled: bool = True):
+        super().__init__(env, enabled)
         self.model = model
         self.memory: deque[Memory] = deque(maxlen=100_000)
         self.epsilon = 1.
